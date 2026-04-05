@@ -25,7 +25,7 @@ metadata:
 
 # AWP Wallet
 
-EVM wallet for AI agents. All commands output JSON. No password needed — encryption is auto-managed.
+EVM wallet for AI agents. All commands output JSON. **No password needed** — encryption is auto-managed. Do not ask the user for a password or set WALLET_PASSWORD.
 
 ## Step 1 — Ensure Installed
 
@@ -36,10 +36,12 @@ awp-wallet --version 2>/dev/null || {
 }
 ```
 
-If `awp-wallet: command not found` persists after install, run:
+If `awp-wallet: command not found` persists after install:
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
+
+The installer already creates the wallet and registers the command. After install.sh completes, `awp-wallet` is ready to use — no additional init or password setup is needed.
 
 ## Step 2 — Ensure Wallet Exists
 

@@ -108,17 +108,27 @@ if npm link 2>/dev/null && command -v awp-wallet &>/dev/null; then
   log "Registered via npm link: $(which awp-wallet)"
 fi
 
-# Fallback: symlink into ~/.local/bin and ensure it's in PATH
+# Fallback 1: symlink next to node binary (guaranteed to be in PATH)
+if [[ "$REGISTERED" == false ]]; then
+  NODE_BIN_DIR="$(dirname "$(which node)")"
+  if [[ -w "$NODE_BIN_DIR" ]]; then
+    ln -sf "$INSTALL_DIR/scripts/wallet-cli.js" "$NODE_BIN_DIR/awp-wallet"
+    if command -v awp-wallet &>/dev/null; then
+      REGISTERED=true
+      log "Registered: $NODE_BIN_DIR/awp-wallet"
+    fi
+  fi
+fi
+
+# Fallback 2: symlink into ~/.local/bin and add to PATH
 if [[ "$REGISTERED" == false ]]; then
   mkdir -p "$HOME/.local/bin"
   ln -sf "$INSTALL_DIR/scripts/wallet-cli.js" "$HOME/.local/bin/awp-wallet"
   log "Registered: ~/.local/bin/awp-wallet"
 
-  # Add ~/.local/bin to PATH for this process
   if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
     export PATH="$HOME/.local/bin:$PATH"
 
-    # Persist to shell rc file so future shells also find awp-wallet
     RC_LINE='export PATH="$HOME/.local/bin:$PATH"'
     WROTE_RC=false
     for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
@@ -129,7 +139,6 @@ if [[ "$REGISTERED" == false ]]; then
         break
       fi
     done
-    # If no rc file had it, append to .profile (create if needed)
     if [[ "$WROTE_RC" == false ]] && ! grep -qsF '.local/bin' "$HOME/.profile"; then
       printf '\n# Added by awp-wallet installer\n%s\n' "$RC_LINE" >> "$HOME/.profile"
       log "Added ~/.local/bin to PATH in .profile"
