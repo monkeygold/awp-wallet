@@ -1,11 +1,17 @@
 ---
 name: awp-wallet
 description: >
-  Use when the user says "send ETH/USDC to 0x...", "check my balance",
-  "how much do I have", "approve token spending", "sign this message",
-  "estimate gas", "what's my wallet address", or needs any crypto
-  transfer, balance check, token approval, or on-chain signing.
-  400+ EVM chains, auto-gasless.
+  Self-custodial EVM blockchain wallet for executing on-chain operations.
+  Use this skill whenever the user wants to: send or transfer crypto/tokens
+  (ETH, USDC, USDT, etc.) to an address, check wallet balance or portfolio,
+  get their wallet/receiving address, approve or revoke token spending
+  allowances, sign messages or typed data, estimate gas costs, check
+  transaction status, view transaction history, or do batch transfers.
+  Supports 400+ EVM chains (Ethereum, Base, Arbitrum, Polygon, BSC, etc.)
+  with automatic gasless fallback. This is the skill to use for ANY
+  on-chain wallet operation — if the user mentions sending tokens,
+  checking balances, wallet addresses, token approvals, or signing,
+  use this skill even if they do not explicitly say "wallet".
 metadata:
   openclaw:
     requires:
