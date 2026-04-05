@@ -78,12 +78,15 @@ cli.command("unlock")
   .description("Unlock wallet and get session token")
   .option("--duration <seconds>", "Session duration in seconds", "3600")
   .option("--scope <scope>", "Session scope (read|transfer|full)", "full")
+  .option("--raw", "Output only the session token (no JSON wrapper)")
   .action(async (opts) => {
     try {
       const duration = parseInt(opts.duration)
       if (isNaN(duration) || duration < 1) throw new Error("--duration must be a positive integer (seconds).")
       const { unlockWallet } = await import("./lib/session.js")
-      json(unlockWallet(duration, opts.scope))
+      const result = unlockWallet(duration, opts.scope)
+      if (opts.raw) { process.stdout.write(result.sessionToken) }
+      else { json(result) }
     } catch (e) { fail(e.message) }
   })
 
@@ -419,6 +422,35 @@ cli.command("wallet-id")
     try {
       const { walletId, WALLET_DIR } = await import("./lib/paths.js")
       json({ walletId, walletDir: WALLET_DIR })
+    } catch (e) { fail(e.message) }
+  })
+
+cli.command("setup")
+  .description("Ensure wallet exists and unlock session (one-step)")
+  .option("--duration <seconds>", "Session duration in seconds", "3600")
+  .action(async (opts) => {
+    try {
+      const { existsSync } = await import("node:fs")
+      const { WALLET_DIR } = await import("./lib/paths.js")
+      const { join } = await import("node:path")
+
+      // Init wallet if needed
+      if (!existsSync(join(WALLET_DIR, "keystore.enc"))) {
+        const { initWallet } = await import("./lib/keystore.js")
+        const w = await initWallet()
+        process.stderr.write(JSON.stringify({ step: "init", address: w.address }) + "\n")
+      }
+
+      // Unlock
+      const duration = parseInt(opts.duration) || 3600
+      const { unlockWallet } = await import("./lib/session.js")
+      const result = unlockWallet(duration, "full")
+
+      // Get address
+      const { getAddress } = await import("./lib/keystore.js")
+      const address = getAddress("eoa")
+
+      json({ status: "ready", address, sessionToken: result.sessionToken, expires: result.expires })
     } catch (e) { fail(e.message) }
   })
 

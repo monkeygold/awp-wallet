@@ -27,39 +27,34 @@ metadata:
 
 EVM wallet for AI agents. All commands output JSON. **No password needed** — encryption is auto-managed. Do not ask the user for a password or set WALLET_PASSWORD.
 
-## Step 1 — Ensure Installed
+## Quick Start (Steps 1-3 combined)
+
+If awp-wallet is already installed, one command does everything — creates wallet if needed and unlocks a session:
 
 ```bash
-awp-wallet --version 2>/dev/null || {
-  git clone https://github.com/awp-core/awp-wallet.git /tmp/awp-wallet &&
-  cd /tmp/awp-wallet && bash install.sh
-}
+TOKEN=$(awp-wallet setup | jq -r '.sessionToken')
 ```
 
-If `awp-wallet: command not found` persists after install:
+Or without jq:
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+TOKEN=$(awp-wallet unlock --raw --duration 3600)
 ```
 
-The installer already creates the wallet and registers the command. After install.sh completes, `awp-wallet` is ready to use — no additional init or password setup is needed.
-
-## Step 2 — Ensure Wallet Exists
+### If awp-wallet is not installed
 
 ```bash
-awp-wallet receive 2>/dev/null || awp-wallet init
+git clone https://github.com/awp-core/awp-wallet.git /tmp/awp-wallet && cd /tmp/awp-wallet && bash install.sh
 ```
 
-When creating a new wallet, tell the user: `[WALLET] created new wallet: 0x...`
+If `command not found` persists after install: `export PATH="$HOME/.local/bin:$PATH"`
 
-## Step 3 — Unlock Session
+The installer creates the wallet automatically. No password needed.
 
-Every operation that reads or writes on-chain needs a session token.
+### Then get a session token
 
 ```bash
-TOKEN=$(awp-wallet unlock --duration 3600 | jq -r '.sessionToken')
+TOKEN=$(awp-wallet unlock --raw --duration 3600)
 ```
-
-If you get `Invalid or expired session`, re-run this step.
 
 ## Step 4 — Execute the User's Request
 
