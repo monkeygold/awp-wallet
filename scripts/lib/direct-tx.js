@@ -30,7 +30,7 @@ export async function sendDirect({ to, amount, asset, chain }) {
     let gasPrice
     try {
       const block = await client.getBlock()
-      gasPrice = block.baseFeePerGas ? block.baseFeePerGas * 2n : await client.getGasPrice()
+      gasPrice = block.baseFeePerGas > 0n ? block.baseFeePerGas * 2n : await client.getGasPrice()
     } catch {
       gasPrice = await client.getGasPrice()
     }
