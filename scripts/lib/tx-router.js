@@ -14,9 +14,18 @@ async function selectMode(chain, asset) {
   const client = publicClient(chainId)
   const eoaAddr = getAddress("eoa")
   const balance = await client.getBalance({ address: eoaAddr })
-  const gasPrice = await client.getGasPrice()
+
+  // Use baseFeePerGas from latest block (more reliable than getGasPrice on L2 chains)
+  // getGasPrice() on L2s can return inflated values that include L1 data fee component
+  let gasPrice
+  try {
+    const block = await client.getBlock()
+    gasPrice = block.baseFeePerGas ? block.baseFeePerGas * 2n : await client.getGasPrice()
+  } catch {
+    gasPrice = await client.getGasPrice()
+  }
   const estimatedGas = asset ? 65_000n : 21_000n
-  const needed = gasPrice * estimatedGas * 2n  // 2x buffer
+  const needed = gasPrice * estimatedGas * 2n  // 2x safety buffer
 
   if (balance >= needed) return "direct"
 
@@ -130,7 +139,13 @@ export async function estimateGas({ to, amount, asset, chain }) {
 
   let estimatedGas, gasPrice
   try {
-    gasPrice = await client.getGasPrice()
+    // Use baseFeePerGas for accurate estimation on L2 chains
+    try {
+      const block = await client.getBlock()
+      gasPrice = block.baseFeePerGas ? block.baseFeePerGas * 2n : await client.getGasPrice()
+    } catch {
+      gasPrice = await client.getGasPrice()
+    }
     if (asset) {
       const { address: tokenAddr, decimals } = await tokenInfo(chainId, asset)
       estimatedGas = await client.estimateGas({

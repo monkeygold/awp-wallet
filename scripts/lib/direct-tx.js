@@ -26,7 +26,14 @@ export async function sendDirect({ to, amount, asset, chain }) {
     const client = publicClient(chainId)
     const balance = await client.getBalance({ address: signer.address })
     const value = parseUnits(amount, chainObj.nativeCurrency.decimals)
-    const gasPrice = await client.getGasPrice()
+    // Use baseFeePerGas for more accurate gas estimation on L2 chains
+    let gasPrice
+    try {
+      const block = await client.getBlock()
+      gasPrice = block.baseFeePerGas ? block.baseFeePerGas * 2n : await client.getGasPrice()
+    } catch {
+      gasPrice = await client.getGasPrice()
+    }
     if (balance < value + gasPrice * 21_000n)
       throw new Error("Insufficient balance for transfer + gas.")
 
