@@ -117,6 +117,15 @@ cli.command("export")
     } catch (e) { fail(e.message) }
   })
 
+cli.command("export-private-key")
+  .description("Export wallet private key (for migration)")
+  .action(async () => {
+    try {
+      const { exportPrivateKey } = await import("./lib/keystore.js")
+      json(exportPrivateKey())
+    } catch (e) { fail(e.message) }
+  })
+
 cli.command("verify-log")
   .description("Verify transaction log integrity")
   .action(async () => {

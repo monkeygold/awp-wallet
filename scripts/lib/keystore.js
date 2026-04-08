@@ -190,6 +190,17 @@ export function exportMnemonic() {
   }
 }
 
+export function exportPrivateKey() {
+  // Security: same guard as exportMnemonic — requires explicit WALLET_PASSWORD
+  if (!process.env.WALLET_PASSWORD) throw new Error("WALLET_PASSWORD required for export. Auto-managed wallets cannot export private keys for security.")
+  const w = decryptKeystore()
+  return {
+    privateKey: w.privateKey,
+    address: w.address,
+    warning: "Store this offline. Anyone with this key has full access to your funds."
+  }
+}
+
 // --- Meta.json with in-process cache ---
 let _metaCache = null
 
