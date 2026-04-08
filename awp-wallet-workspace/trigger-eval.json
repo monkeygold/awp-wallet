@@ -1,0 +1,22 @@
+[
+  {"query": "帮我把 50 USDC 从 Base 转到 0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18", "should_trigger": true},
+  {"query": "i need to send 0.1 eth to my friend's address 0xAbC123... on arbitrum, can you do that?", "should_trigger": true},
+  {"query": "how much ETH do I have in my wallet right now? check all chains if you can", "should_trigger": true},
+  {"query": "我需要给一个 dex router 授权 1000 USDC 的额度，地址是 0x1111111254EEB25477B68fb85Ed929f73A960582，在 polygon 上", "should_trigger": true},
+  {"query": "sign this message with my wallet: 'I agree to the terms of service for DApp XYZ, nonce: 42'", "should_trigger": true},
+  {"query": "what's my wallet address? i need to give it to someone so they can send me tokens", "should_trigger": true},
+  {"query": "estimate how much gas it would cost to send 100 usdt to 0xBob on ethereum mainnet", "should_trigger": true},
+  {"query": "check if my transaction 0xabc123def456... went through on base, it's been pending for a while", "should_trigger": true},
+  {"query": "I want to revoke the USDC approval I gave to 0xOldRouter on optimism, I don't use that dex anymore", "should_trigger": true},
+  {"query": "send 10 USDC each to these 3 addresses on base: 0xAlice, 0xBob, 0xCharlie", "should_trigger": true},
+  {"query": "write a solidity smart contract for an ERC-20 token with a 2% transfer tax and an owner-only mint function", "should_trigger": false},
+  {"query": "我在用 hardhat 部署合约的时候遇到了 gas estimation 错误，能帮我看看 deploy script 哪里写错了么", "should_trigger": false},
+  {"query": "help me set up a subgraph on The Graph to index Transfer events from the USDC contract on ethereum", "should_trigger": false},
+  {"query": "can you explain how ERC-4337 account abstraction works? I'm writing a blog post about it and need to understand the bundler/paymaster flow", "should_trigger": false},
+  {"query": "i need to parse this ethereum transaction receipt JSON and extract the log topics, here's the raw data from etherscan API...", "should_trigger": false},
+  {"query": "help me configure metamask to connect to a custom RPC endpoint for my local hardhat node at localhost:8545", "should_trigger": false},
+  {"query": "analyze the gas usage patterns in this CSV file exported from etherscan, find the most expensive transactions and plot a histogram", "should_trigger": false},
+  {"query": "I'm building a token price oracle using chainlink, can you help me write the consumer contract that reads ETH/USD price?", "should_trigger": false},
+  {"query": "review my solidity code for reentrancy vulnerabilities, the contract is in contracts/Vault.sol", "should_trigger": false},
+  {"query": "set up a cron job that checks the ETH price every 5 minutes using the coingecko API and sends me a slack notification if it drops below $2000", "should_trigger": false}
+]

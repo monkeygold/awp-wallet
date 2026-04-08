@@ -1,0 +1,23 @@
+{
+  "skill_name": "awp-wallet",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我查一下我在 Base 链上有多少 USDC",
+      "expected_output": "Agent should: install wallet if needed, unlock session, run balance command with --chain base --asset usdc, present result with [QUERY] tag, then lock",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "send 0.05 ETH to 0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18 on Arbitrum",
+      "expected_output": "Agent should: ensure wallet installed, unlock, confirm with user before sending (show [TX] confirmation), run send command with correct chain/amount/to, show tx hash with explorer link, lock",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我的钱包地址是什么？我还没装过钱包",
+      "expected_output": "Agent should: detect wallet not installed, run install.sh, init wallet, run receive to get address, show address with [WALLET] tag. Should NOT ask for password.",
+      "files": []
+    }
+  ]
+}

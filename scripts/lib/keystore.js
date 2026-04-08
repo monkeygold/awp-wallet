@@ -58,9 +58,9 @@ function persistNewWallet(wallet, status) {
   writeFileSync(META_PATH, JSON.stringify({ address: wallet.address, smartAccounts: {} }), { mode: 0o600 })
 
   // Copy default config if not present
-  const configPath = join(WALLET_DIR, "config.json")
+  const configPath = join(WALLET_DIR, "chains.json")
   if (!existsSync(configPath)) {
-    const defaultConfig = join(__dirname, "..", "..", "assets", "default-config.json")
+    const defaultConfig = join(__dirname, "..", "..", "assets", "default-chains.json")
     if (existsSync(defaultConfig)) writeFileSync(configPath, readFileSync(defaultConfig), { mode: 0o600 })
   }
 

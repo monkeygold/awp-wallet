@@ -30,7 +30,7 @@ const CUSTOM = new Map()
 
 // --- Config loading (with graceful error handling) ---
 let _configCache = null
-const CONFIG_PATH = join(WALLET_DIR, "config.json")
+const CONFIG_PATH = join(WALLET_DIR, "chains.json")
 
 export function loadConfig() {
   if (_configCache) return _configCache

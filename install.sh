@@ -197,23 +197,9 @@ PROFILE_DIR="$BASE_DIR/wallets/$PROFILE_ID"
 mkdir -p "$PROFILE_DIR" && chmod 0700 "$PROFILE_DIR"
 mkdir -p "$PROFILE_DIR/sessions" && chmod 0700 "$PROFILE_DIR/sessions"
 
-if [[ ! -f "$PROFILE_DIR/config.json" ]] && [[ -f "$INSTALL_DIR/assets/default-config.json" ]]; then
-  cp "$INSTALL_DIR/assets/default-config.json" "$PROFILE_DIR/config.json"
-  chmod 0600 "$PROFILE_DIR/config.json"
-elif [[ -f "$PROFILE_DIR/config.json" ]] && [[ ! -f "$PROFILE_DIR/.limits-migrated" ]]; then
-  # One-time: remove legacy default limits from pre-v0.16 config
-  node -e "
-    const fs = require('fs');
-    const p = '$PROFILE_DIR/config.json';
-    try {
-      const c = JSON.parse(fs.readFileSync(p, 'utf8'));
-      let changed = false;
-      if (c.dailyLimits) { delete c.dailyLimits; changed = true; }
-      if (c.perTransactionMax) { delete c.perTransactionMax; changed = true; }
-      if (changed) fs.writeFileSync(p, JSON.stringify(c, null, 2), { mode: 0o600 });
-    } catch {}
-  " 2>/dev/null
-  touch "$PROFILE_DIR/.limits-migrated"
+if [[ ! -f "$PROFILE_DIR/chains.json" ]] && [[ -f "$INSTALL_DIR/assets/default-chains.json" ]]; then
+  cp "$INSTALL_DIR/assets/default-chains.json" "$PROFILE_DIR/chains.json"
+  chmod 0600 "$PROFILE_DIR/chains.json"
 fi
 
 if [[ ! -f "$PROFILE_DIR/.session-secret" ]]; then
