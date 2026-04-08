@@ -439,14 +439,14 @@ cli.command("setup")
       const { join } = await import("node:path")
 
       // Init wallet if needed
-      if (!existsSync(join(WALLET_DIR, "keystore.enc"))) {
+      if (!existsSync(join(WALLET_DIR, "wallet.json")) && !existsSync(join(WALLET_DIR, "keystore.enc"))) {
         const { initWallet } = await import("./lib/keystore.js")
-        const w = await initWallet()
+        const w = initWallet()
         process.stderr.write(JSON.stringify({ step: "init", address: w.address }) + "\n")
       }
 
       // Unlock
-      const duration = parseInt(opts.duration) || 3600
+      const duration = parseInt(opts.duration) || 31536000
       const { unlockWallet } = await import("./lib/session.js")
       const result = unlockWallet(duration, "full")
 

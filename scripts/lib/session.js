@@ -28,7 +28,7 @@ export function unlockWallet(durationSec = 31536000, scope = "full") {
   const id = "wlt_" + randomBytes(16).toString("hex")
   const expires = new Date(Date.now() + durationSec * 1000).toISOString()
 
-  // Decrypt + write encrypted cache (privateKey stays internal to keystore.js)
+  // Verify wallet is readable (throws if no wallet found)
   unlockAndCache(id, expires)
 
   // Ensure sessions directory exists
@@ -87,7 +87,6 @@ export function lockWallet() {
       try { unlinkSync(join(SESSIONS_DIR, f)) } catch { /* concurrent deletion is harmless */ }
     }
   }
-  // Delete signer cache
-  clearSignerCache()
+  clearSignerCache()  // no-op with plaintext storage, kept for interface compat
   return { status: "locked" }
 }

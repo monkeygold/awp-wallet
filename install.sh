@@ -227,7 +227,7 @@ run_cli_pw() {
 
 # ---------- Step 5: Initialize wallet ----------
 if [[ "$AUTO_INIT" == true ]]; then
-  if [[ -f "$PROFILE_DIR/keystore.enc" ]]; then
+  if [[ -f "$PROFILE_DIR/wallet.json" ]] || [[ -f "$PROFILE_DIR/keystore.enc" ]]; then
     log "Wallet already exists, skipping init"
     ADDRESS=$(run_cli receive 2>/dev/null | node -e "try{process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).eoaAddress)}catch{}" 2>/dev/null || echo "")
   else
@@ -263,11 +263,6 @@ fi
 echo "" >&2
 
 # JSON output
-PMODE="auto"
-if [[ "$USER_PROVIDED_PASSWORD" == true ]]; then
-  PMODE="explicit"
-fi
-
 cat <<ENDJSON
-{"status":"installed","installDir":"$INSTALL_DIR","profileId":"$PROFILE_ID","profileDir":"$PROFILE_DIR","passwordMode":"$PMODE","address":"${ADDRESS:-null}","command":"awp-wallet","pimlicoEnabled":$([ -n "$PIMLICO_API_KEY" ] && echo true || echo false)}
+{"status":"installed","installDir":"$INSTALL_DIR","profileId":"$PROFILE_ID","profileDir":"$PROFILE_DIR","storageMode":"plaintext","address":"${ADDRESS:-null}","command":"awp-wallet","pimlicoEnabled":$([ -n "$PIMLICO_API_KEY" ] && echo true || echo false)}
 ENDJSON

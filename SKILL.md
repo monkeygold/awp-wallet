@@ -160,7 +160,7 @@ Built-in: `usdc` `usdt` `awp` `weth` `wbnb` `dai`
 | Error | Fix |
 |-------|-----|
 | `command not found` | Install (see Setup) |
-| `No wallet found` | `awp-wallet init` |
+| `No wallet found` | `awp-wallet setup` |
 | `Invalid or expired session` | `awp-wallet unlock --raw` |
 | `Insufficient balance` | Tell user; suggest `--mode gasless` |
 | `Daily limit exceeded` | Try again in 24h |
