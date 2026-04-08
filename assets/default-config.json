@@ -7,20 +7,6 @@
     "optimism": "https://optimism-rpc.publicnode.com",
     "celo": "https://celo.drpc.org"
   },
-  "dailyLimits": {
-    "USDC": "1000",
-    "USDT": "1000",
-    "DAI": "1000",
-    "ETH": "0.5",
-    "BNB": "1.0",
-    "default": "500"
-  },
-  "perTransactionMax": {
-    "USDC": "500",
-    "USDT": "500",
-    "ETH": "0.25",
-    "default": "250"
-  },
   "allowlistMode": false,
   "allowlistedRecipients": [],
   "bundlerProviders": [
