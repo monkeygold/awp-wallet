@@ -99,15 +99,6 @@ cli.command("lock")
     } catch (e) { fail(e.message) }
   })
 
-cli.command("change-password")
-  .description("Change wallet password")
-  .action(async () => {
-    try {
-      const { changePassword } = await import("./lib/keystore.js")
-      json(await changePassword())
-    } catch (e) { fail(e.message) }
-  })
-
 cli.command("export")
   .description("Export wallet mnemonic")
   .action(async () => {

@@ -1,198 +1,121 @@
-import { Wallet, encryptKeystoreJson } from "ethers"
+import { Wallet } from "ethers"
 import { privateKeyToAccount } from "viem/accounts"
-import { createHash, createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto"
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs"
+import { randomBytes } from "node:crypto"
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { WALLET_DIR, WALLETS_DIR, registerWallet } from "./paths.js"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const KS_PATH = join(WALLET_DIR, "keystore.enc")
+const WALLET_PATH = join(WALLET_DIR, "wallet.json")
+const LEGACY_KS_PATH = join(WALLET_DIR, "keystore.enc")
+const LEGACY_PW_PATH = join(WALLET_DIR, ".wallet-password")
 const META_PATH = join(WALLET_DIR, "meta.json")
-const CACHE_DIR = join(WALLET_DIR, ".signer-cache")
-const CACHE_SALT_PATH = join(CACHE_DIR, ".salt")
-const AUTO_PW_PATH = join(WALLET_DIR, ".wallet-password")
 
-function getPassword() {
-  // 1. Explicit env var (Password mode — agent manages the password)
-  if (process.env.WALLET_PASSWORD) return process.env.WALLET_PASSWORD
+// --- Load wallet from plaintext wallet.json (with legacy keystore.enc migration) ---
 
-  // 2. Auto-managed password file (Default mode — passwordless UX)
-  if (existsSync(AUTO_PW_PATH)) return readFileSync(AUTO_PW_PATH, "utf8").trim()
-
-  // 3. First-time init — generate and persist
-  const pw = randomBytes(32).toString("base64")
-  if (!existsSync(WALLET_DIR)) mkdirSync(WALLET_DIR, { recursive: true, mode: 0o700 })
-  writeFileSync(AUTO_PW_PATH, pw, { mode: 0o600 })
-  return pw
-}
-
-// --- Shared helpers ---
-
-// Decrypt keystore with error wrapping (used by loadSigner, unlockAndCache, changePassword, exportMnemonic)
-function decryptKeystore(password) {
-  const json = readFileSync(KS_PATH, "utf8")
-  try { return Wallet.fromEncryptedJsonSync(json, password || getPassword()) }
-  catch (e) {
-    if ((e.message || "").toLowerCase().match(/password|decrypt|incorrect/))
-      throw new Error("Wrong password — decryption failed.")
-    throw e
+function loadWallet() {
+  // New format: plaintext wallet.json
+  if (existsSync(WALLET_PATH)) {
+    return JSON.parse(readFileSync(WALLET_PATH, "utf8"))
   }
+
+  // Legacy migration: encrypted keystore.enc → wallet.json
+  if (existsSync(LEGACY_KS_PATH)) {
+    let password
+    if (process.env.WALLET_PASSWORD) {
+      password = process.env.WALLET_PASSWORD
+    } else if (existsSync(LEGACY_PW_PATH)) {
+      password = readFileSync(LEGACY_PW_PATH, "utf8").trim()
+    } else {
+      throw new Error("Legacy encrypted wallet found but no password available. Set WALLET_PASSWORD to migrate.")
+    }
+    const json = readFileSync(LEGACY_KS_PATH, "utf8")
+    const w = Wallet.fromEncryptedJsonSync(json, password)
+    // Migrate to plaintext
+    const data = { privateKey: w.privateKey, address: w.address }
+    if (w.mnemonic) data.mnemonic = w.mnemonic.phrase
+    writeFileSync(WALLET_PATH, JSON.stringify(data), { mode: 0o600 })
+    return data
+  }
+
+  throw new Error("No wallet found. Run 'init' first.")
 }
 
-// Persist new wallet to disk (used by initWallet, importWallet)
-async function persistNewWallet(wallet, status) {
-  const pw = getPassword()
-  const json = await encryptKeystoreJson(wallet, pw, { scrypt: { N: 262144 } })
-  // Provision wallet directory with 0o700 on all parent dirs
+// Persist new wallet to disk
+function persistNewWallet(wallet, status) {
+  // Provision wallet directory
   if (!existsSync(WALLETS_DIR)) mkdirSync(WALLETS_DIR, { recursive: true, mode: 0o700 })
   if (!existsSync(WALLET_DIR)) mkdirSync(WALLET_DIR, { mode: 0o700 })
   mkdirSync(join(WALLET_DIR, "sessions"), { recursive: true, mode: 0o700 })
-  writeFileSync(KS_PATH, json, { mode: 0o600 })
+
+  // Write plaintext wallet.json
+  const data = { privateKey: wallet.privateKey, address: wallet.address }
+  if (wallet.mnemonic) data.mnemonic = wallet.mnemonic.phrase
+  writeFileSync(WALLET_PATH, JSON.stringify(data), { mode: 0o600 })
+
+  // Write meta.json
   writeFileSync(META_PATH, JSON.stringify({ address: wallet.address, smartAccounts: {} }), { mode: 0o600 })
+
   // Copy default config if not present
   const configPath = join(WALLET_DIR, "config.json")
   if (!existsSync(configPath)) {
     const defaultConfig = join(__dirname, "..", "..", "assets", "default-config.json")
     if (existsSync(defaultConfig)) writeFileSync(configPath, readFileSync(defaultConfig), { mode: 0o600 })
   }
+
   // Generate session secret if not present
   const secretPath = join(WALLET_DIR, ".session-secret")
   if (!existsSync(secretPath)) {
     writeFileSync(secretPath, randomBytes(32).toString("hex"), { mode: 0o600 })
   }
-  // Register in wallet registry
+
   registerWallet(wallet.address)
-  _metaCache = null  // Reset cache so subsequent reads pick up new meta
+  _metaCache = null
 
-  const result = { status, address: wallet.address }
-  result.passwordMode = process.env.WALLET_PASSWORD ? "explicit" : "auto"
-  return result
-}
-
-// --- AES-256-GCM signer cache with scrypt KDF ---
-
-// Cache the derived AES key per-process (password doesn't change mid-process)
-let _aesKeyCache = null
-let _aesKeyCachePassword = null
-
-function deriveAesKey(password) {
-  if (_aesKeyCache && _aesKeyCachePassword === password) return _aesKeyCache
-
-  let salt
-  if (existsSync(CACHE_SALT_PATH)) {
-    salt = readFileSync(CACHE_SALT_PATH)
-  } else {
-    salt = randomBytes(32)
-    if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { mode: 0o700 })
-    writeFileSync(CACHE_SALT_PATH, salt, { mode: 0o600 })
-  }
-  _aesKeyCache = scryptSync(password, salt, 32, { N: 16384, r: 8, p: 1 })
-  _aesKeyCachePassword = password
-  return _aesKeyCache
-}
-
-function writeSignerCache(sessionId, privateKey, expiresISO) {
-  const key = deriveAesKey(getPassword())
-  const iv = randomBytes(12)
-  const cipher = createCipheriv("aes-256-gcm", key, iv)
-  const plaintext = JSON.stringify({ privateKey, expires: expiresISO })
-  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
-  const tag = cipher.getAuthTag()
-  const blob = Buffer.concat([iv, tag, encrypted])
-  if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { mode: 0o700 })
-  writeFileSync(join(CACHE_DIR, sessionId + ".key"), blob, { mode: 0o600 })
-}
-
-function readSignerCache() {
-  if (!existsSync(CACHE_DIR)) return null
-  let password
-  try { password = getPassword() } catch { return null }
-
-  const key = deriveAesKey(password)
-  const files = readdirSync(CACHE_DIR).filter(f => f.endsWith(".key"))
-  for (const f of files) {
-    try {
-      const blob = readFileSync(join(CACHE_DIR, f))
-      const iv = blob.subarray(0, 12)
-      const tag = blob.subarray(12, 28)
-      const ciphertext = blob.subarray(28)
-      const decipher = createDecipheriv("aes-256-gcm", key, iv)
-      decipher.setAuthTag(tag)
-      const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()])
-      const data = JSON.parse(plaintext.toString("utf8"))
-      if (new Date(data.expires) > new Date()) {
-        return privateKeyToAccount(data.privateKey)
-      }
-      try { unlinkSync(join(CACHE_DIR, f)) } catch {}
-    } catch {
-      try { unlinkSync(join(CACHE_DIR, f)) } catch {}
-    }
-  }
-  return null
+  return { status, address: wallet.address }
 }
 
 // --- Exports ---
 
 export function loadSigner() {
-  const cached = readSignerCache()
-  if (cached) return { account: cached }
-
-  const w = decryptKeystore()
-  return { account: privateKeyToAccount(w.privateKey) }
+  const data = loadWallet()
+  return { account: privateKeyToAccount(data.privateKey) }
 }
 
 export function unlockAndCache(sessionId, expiresISO) {
-  const w = decryptKeystore()
-  writeSignerCache(sessionId, w.privateKey, expiresISO)
-  return { account: privateKeyToAccount(w.privateKey) }
+  // No cache needed — plaintext read is fast
+  return loadSigner()
 }
 
 export function clearSignerCache() {
-  if (!existsSync(CACHE_DIR)) return
-  for (const f of readdirSync(CACHE_DIR)) {
-    try { unlinkSync(join(CACHE_DIR, f)) } catch {}
-  }
-  _aesKeyCache = null
-  _aesKeyCachePassword = null
+  // No-op — no cache with plaintext storage
 }
 
-export async function initWallet() {
-  if (existsSync(KS_PATH)) throw new Error("Wallet already exists.")
+export function initWallet() {
+  if (existsSync(WALLET_PATH) || existsSync(LEGACY_KS_PATH)) throw new Error("Wallet already exists.")
   return persistNewWallet(Wallet.createRandom(), "created")
 }
 
-export async function importWallet(mnemonic) {
-  if (existsSync(KS_PATH)) throw new Error("Wallet already exists.")
+export function importWallet(mnemonic) {
+  if (existsSync(WALLET_PATH) || existsSync(LEGACY_KS_PATH)) throw new Error("Wallet already exists.")
   return persistNewWallet(Wallet.fromPhrase(mnemonic.trim()), "imported")
 }
 
-export async function changePassword() {
-  const newPw = process.env.NEW_WALLET_PASSWORD
-  if (!newPw) throw new Error("NEW_WALLET_PASSWORD environment variable required.")
-  const w = decryptKeystore()
-  const newJson = await encryptKeystoreJson(w, newPw, { scrypt: { N: 262144 } })
-  writeFileSync(KS_PATH, newJson, { mode: 0o600 })
-  // Update auto-managed password file if it exists
-  if (existsSync(AUTO_PW_PATH)) writeFileSync(AUTO_PW_PATH, newPw, { mode: 0o600 })
-  clearSignerCache()
-  return { status: "password_changed" }
-}
-
 export function exportMnemonic() {
-  const w = decryptKeystore()
-  if (!w.mnemonic) throw new Error("Wallet has no mnemonic (imported from private key).")
+  const data = loadWallet()
+  if (!data.mnemonic) throw new Error("Wallet has no mnemonic (imported from private key).")
   return {
-    mnemonic: w.mnemonic.phrase,
+    mnemonic: data.mnemonic,
     warning: "Store this offline. Anyone with these words has full access to your funds."
   }
 }
 
 export function exportPrivateKey() {
-  const w = decryptKeystore()
+  const data = loadWallet()
   return {
-    privateKey: w.privateKey,
-    address: w.address,
+    privateKey: data.privateKey,
+    address: data.address,
     warning: "Store this offline. Anyone with this key has full access to your funds."
   }
 }
@@ -224,7 +147,7 @@ export function saveSmartAccountAddress(chainId, addr) {
   if (!meta.smartAccounts) meta.smartAccounts = {}
   meta.smartAccounts[String(chainId)] = addr
   writeFileSync(META_PATH, JSON.stringify(meta), { mode: 0o600 })
-  _metaCache = meta // update cache
+  _metaCache = meta
 }
 
 export function getReceiveInfo(chainId) {
