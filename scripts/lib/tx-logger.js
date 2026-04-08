@@ -27,7 +27,7 @@ export function logTransaction(data) {
 export function getHistory(chain, limit = 50) {
   if (!existsSync(LOG_PATH)) return []  // No logs yet — normal state for a new wallet
   const lines = readFileSync(LOG_PATH, "utf8").trim().split("\n").filter(Boolean)
-  let entries = lines.map(l => JSON.parse(l))
+  let entries = lines.map(l => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean)
   if (chain) {
     // Support filtering by: config name ("bsc"), display name ("BNB Smart Chain"), or numeric chainId (56)
     const numChain = Number(chain)

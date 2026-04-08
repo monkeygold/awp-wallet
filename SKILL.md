@@ -54,7 +54,7 @@ git clone https://github.com/awp-core/awp-wallet.git ~/awp-wallet && cd ~/awp-wa
 
 If `command not found` after install: `export PATH="$HOME/.local/bin:$PATH"`
 
-The installer creates the wallet automatically. Then run `awp-wallet setup` or `awp-wallet unlock --raw`.
+The installer creates the wallet automatically. Then run `awp-wallet setup --raw` to get a session token.
 
 ## Commands
 

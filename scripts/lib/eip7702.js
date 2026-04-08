@@ -9,7 +9,14 @@ export async function upgradeVia7702(sessionToken, chain, target = "kernel") {
   const chainId = resolveChainId(chain)
   const client = publicClient(chainId)
   const balance = await client.getBalance({ address: getAddress("eoa") })
-  const gasPrice = await client.getGasPrice()
+  // Use baseFeePerGas for accurate estimation on L2 chains
+  let gasPrice
+  try {
+    const block = await client.getBlock()
+    gasPrice = block.baseFeePerGas > 0n ? block.baseFeePerGas * 2n : await client.getGasPrice()
+  } catch {
+    gasPrice = await client.getGasPrice()
+  }
   const estimatedFee = gasPrice * 100_000n  // Estimated gas fee for EIP-7702 transaction
   if (balance < estimatedFee) throw new Error(
     "EIP-7702 requires native gas in EOA. Use 'deploy-4337' for gasless setup instead."
