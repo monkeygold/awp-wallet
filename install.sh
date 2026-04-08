@@ -200,6 +200,19 @@ mkdir -p "$PROFILE_DIR/sessions" && chmod 0700 "$PROFILE_DIR/sessions"
 if [[ ! -f "$PROFILE_DIR/config.json" ]] && [[ -f "$INSTALL_DIR/assets/default-config.json" ]]; then
   cp "$INSTALL_DIR/assets/default-config.json" "$PROFILE_DIR/config.json"
   chmod 0600 "$PROFILE_DIR/config.json"
+elif [[ -f "$PROFILE_DIR/config.json" ]]; then
+  # Remove legacy default limits from existing config (v0.16+ has no default limits)
+  node -e "
+    const fs = require('fs');
+    const p = '$PROFILE_DIR/config.json';
+    try {
+      const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+      let changed = false;
+      if (c.dailyLimits) { delete c.dailyLimits; changed = true; }
+      if (c.perTransactionMax) { delete c.perTransactionMax; changed = true; }
+      if (changed) fs.writeFileSync(p, JSON.stringify(c, null, 2), { mode: 0o600 });
+    } catch {}
+  " 2>/dev/null
 fi
 
 if [[ ! -f "$PROFILE_DIR/.session-secret" ]]; then
