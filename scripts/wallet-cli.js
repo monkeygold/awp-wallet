@@ -432,6 +432,7 @@ cli.command("wallet-id")
 cli.command("setup")
   .description("Ensure wallet exists and unlock session (one-step)")
   .option("--duration <seconds>", "Session duration in seconds", "31536000")
+  .option("--raw", "Output only the session token (no JSON wrapper)")
   .action(async (opts) => {
     try {
       const { existsSync } = await import("node:fs")
@@ -450,11 +451,13 @@ cli.command("setup")
       const { unlockWallet } = await import("./lib/session.js")
       const result = unlockWallet(duration, "full")
 
-      // Get address
-      const { getAddress } = await import("./lib/keystore.js")
-      const address = getAddress("eoa")
-
-      json({ status: "ready", address, sessionToken: result.sessionToken, expires: result.expires })
+      if (opts.raw) {
+        process.stdout.write(result.sessionToken)
+      } else {
+        const { getAddress } = await import("./lib/keystore.js")
+        const address = getAddress("eoa")
+        json({ status: "ready", address, sessionToken: result.sessionToken, expires: result.expires })
+      }
     } catch (e) { fail(e.message) }
   })
 

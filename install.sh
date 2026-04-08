@@ -18,14 +18,12 @@ set -euo pipefail
 
 # ---------- Defaults ----------
 INSTALL_DIR="$HOME/awp-wallet"
-WALLET_PASSWORD=""
 AUTO_INIT=true
 MNEMONIC=""
 PIMLICO_API_KEY=""
 ADDRESS=""
 AGENT_ID=""
 SESSION_ID=""
-USER_PROVIDED_PASSWORD=false
 REPO_URL="https://github.com/awp-core/awp-wallet.git"
 
 # ---------- Colors (stderr only) ----------
@@ -44,7 +42,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --dir)          INSTALL_DIR="$2"; shift 2 ;;
     --no-init)      AUTO_INIT=false; shift ;;
-    --password)     WALLET_PASSWORD="$2"; USER_PROVIDED_PASSWORD=true; shift 2 ;;
+    --password)     warn "--password is deprecated (wallet uses plaintext storage now)"; shift 2 ;;
     --mnemonic)     MNEMONIC="$2"; shift 2 ;;
     --pimlico)      PIMLICO_API_KEY="$2"; shift 2 ;;
     --agent-id)     AGENT_ID="$2"; shift 2 ;;
@@ -85,9 +83,9 @@ elif [[ -f "$SCRIPT_DIR/package.json" ]] && grep -q "awp-wallet" "$SCRIPT_DIR/pa
     rm -rf "$INSTALL_DIR/node_modules" "$INSTALL_DIR/.git"
   fi
   cd "$INSTALL_DIR"
-elif [[ -d "$INSTALL_DIR" ]] && [[ ! -f "$INSTALL_DIR/package.json" ]]; then
-  # Broken install directory — clean and re-clone
-  warn "Broken installation at $INSTALL_DIR, re-installing..."
+elif [[ -d "$INSTALL_DIR" ]]; then
+  # Directory exists but is not an awp-wallet git repo — clean and re-clone
+  warn "Non-awp-wallet directory at $INSTALL_DIR, re-installing..."
   rm -rf "$INSTALL_DIR"
   git clone "$REPO_URL" "$INSTALL_DIR"
   cd "$INSTALL_DIR"
@@ -223,9 +221,9 @@ if [[ "$AUTO_INIT" == true ]]; then
   else
     log "Initializing wallet..."
     if [[ -n "$MNEMONIC" ]]; then
-      INIT_RESULT=$(run_cli import --mnemonic "$MNEMONIC" 2>&1) || { err "Wallet import failed: $INIT_RESULT"; }
+      INIT_RESULT=$(run_cli import --mnemonic "$MNEMONIC" 2>/dev/null) || { err "Wallet import failed. Run: awp-wallet import --mnemonic '...'"; }
     else
-      INIT_RESULT=$(run_cli init 2>&1) || { err "Wallet init failed: $INIT_RESULT"; }
+      INIT_RESULT=$(run_cli init 2>/dev/null) || { err "Wallet init failed. Run: awp-wallet init"; }
     fi
     ADDRESS=$(echo "$INIT_RESULT" | node -e "try{process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).address)}catch{}" 2>/dev/null || echo "")
     if [[ -z "$ADDRESS" ]]; then

@@ -43,7 +43,7 @@ TOKEN=$(awp-wallet setup | jq -r '.sessionToken')
 
 Without jq:
 ```bash
-TOKEN=$(awp-wallet unlock --raw)
+TOKEN=$(awp-wallet setup --raw)
 ```
 
 ### If awp-wallet is not installed

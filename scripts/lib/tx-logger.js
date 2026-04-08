@@ -44,8 +44,10 @@ export function verifyIntegrity() {
   if (!existsSync(LOG_PATH)) return { valid: true, entries: 0 }
   const lines = readFileSync(LOG_PATH, "utf8").trim().split("\n").filter(Boolean)
   let prevHash = "0"
-  for (const line of lines) {
-    const entry = JSON.parse(line)
+  for (let i = 0; i < lines.length; i++) {
+    let entry
+    try { entry = JSON.parse(lines[i]) }
+    catch { return { valid: false, brokenAt: `line_${i + 1}_corrupt` } }
     const { _prevHash: _, _hash: __, ...content } = entry
     const expected = createHash("sha256")
       .update(prevHash + JSON.stringify(content))
