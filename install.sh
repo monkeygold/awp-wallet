@@ -86,6 +86,12 @@ elif [[ -f "$SCRIPT_DIR/package.json" ]] && grep -q "awp-wallet" "$SCRIPT_DIR/pa
     rm -rf "$INSTALL_DIR/node_modules" "$INSTALL_DIR/.git"
   fi
   cd "$INSTALL_DIR"
+elif [[ -d "$INSTALL_DIR" ]] && [[ ! -f "$INSTALL_DIR/package.json" ]]; then
+  # Broken install directory — clean and re-clone
+  warn "Broken installation at $INSTALL_DIR, re-installing..."
+  rm -rf "$INSTALL_DIR"
+  git clone "$REPO_URL" "$INSTALL_DIR"
+  cd "$INSTALL_DIR"
 else
   log "Cloning repository..."
   git clone "$REPO_URL" "$INSTALL_DIR"
@@ -146,9 +152,18 @@ if [[ "$REGISTERED" == false ]]; then
   fi
 fi
 
-# Final verification
+# Final verification — check command exists AND symlink target is valid
 if ! command -v awp-wallet &>/dev/null; then
   err "Failed to register awp-wallet in PATH. Add manually: export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
+AWP_PATH="$(which awp-wallet)"
+if [[ -L "$AWP_PATH" ]] && [[ ! -e "$AWP_PATH" ]]; then
+  warn "Broken symlink at $AWP_PATH, re-linking..."
+  ln -sf "$INSTALL_DIR/scripts/wallet-cli.js" "$AWP_PATH"
+  if [[ ! -e "$AWP_PATH" ]]; then
+    err "Symlink target missing: $INSTALL_DIR/scripts/wallet-cli.js"
+  fi
+  log "Fixed symlink: $AWP_PATH"
 fi
 
 CLI=(awp-wallet)

@@ -49,7 +49,7 @@ TOKEN=$(awp-wallet unlock --raw --duration 3600)
 ### If awp-wallet is not installed
 
 ```bash
-git clone https://github.com/awp-core/awp-wallet.git /tmp/awp-wallet && cd /tmp/awp-wallet && bash install.sh
+git clone https://github.com/awp-core/awp-wallet.git ~/awp-wallet && cd ~/awp-wallet && bash install.sh
 ```
 
 If `command not found` persists after install: `export PATH="$HOME/.local/bin:$PATH"`
