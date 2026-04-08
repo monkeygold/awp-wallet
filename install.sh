@@ -200,8 +200,8 @@ mkdir -p "$PROFILE_DIR/sessions" && chmod 0700 "$PROFILE_DIR/sessions"
 if [[ ! -f "$PROFILE_DIR/config.json" ]] && [[ -f "$INSTALL_DIR/assets/default-config.json" ]]; then
   cp "$INSTALL_DIR/assets/default-config.json" "$PROFILE_DIR/config.json"
   chmod 0600 "$PROFILE_DIR/config.json"
-elif [[ -f "$PROFILE_DIR/config.json" ]]; then
-  # Remove legacy default limits from existing config (v0.16+ has no default limits)
+elif [[ -f "$PROFILE_DIR/config.json" ]] && [[ ! -f "$PROFILE_DIR/.limits-migrated" ]]; then
+  # One-time: remove legacy default limits from pre-v0.16 config
   node -e "
     const fs = require('fs');
     const p = '$PROFILE_DIR/config.json';
@@ -213,6 +213,7 @@ elif [[ -f "$PROFILE_DIR/config.json" ]]; then
       if (changed) fs.writeFileSync(p, JSON.stringify(c, null, 2), { mode: 0o600 });
     } catch {}
   " 2>/dev/null
+  touch "$PROFILE_DIR/.limits-migrated"
 fi
 
 if [[ ! -f "$PROFILE_DIR/.session-secret" ]]; then
