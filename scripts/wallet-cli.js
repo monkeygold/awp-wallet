@@ -99,6 +99,10 @@ cli.command("lock")
     } catch (e) { fail(e.message) }
   })
 
+cli.command("change-password")
+  .description("(Removed) Wallet no longer uses passwords")
+  .action(() => { json({ status: "no_op", message: "Wallet uses plaintext storage now. Password management is no longer needed." }) })
+
 cli.command("export")
   .description("Export wallet mnemonic")
   .action(async () => {
