@@ -8,7 +8,6 @@
 # Options:
 #   --dir <path>          Installation directory (default: ~/awp-wallet)
 #   --no-init             Install only, do not create a wallet
-#   --password <pwd>      Use explicit password (default: auto-managed)
 #   --mnemonic <phrase>   Import existing wallet from seed phrase
 #   --pimlico <key>       Set PIMLICO_API_KEY for gasless transactions
 #   --agent-id <id>       Wallet profile ID (multi-agent isolation)
@@ -216,15 +215,6 @@ fi
 
 log "Profile: $PROFILE_ID ($PROFILE_DIR)"
 
-# Helper: run CLI with optional WALLET_PASSWORD
-run_cli_pw() {
-  if [[ -n "$WALLET_PASSWORD" ]]; then
-    WALLET_PASSWORD="$WALLET_PASSWORD" run_cli "$@"
-  else
-    run_cli "$@"
-  fi
-}
-
 # ---------- Step 5: Initialize wallet ----------
 if [[ "$AUTO_INIT" == true ]]; then
   if [[ -f "$PROFILE_DIR/wallet.json" ]] || [[ -f "$PROFILE_DIR/keystore.enc" ]]; then
@@ -233,9 +223,9 @@ if [[ "$AUTO_INIT" == true ]]; then
   else
     log "Initializing wallet..."
     if [[ -n "$MNEMONIC" ]]; then
-      INIT_RESULT=$(run_cli_pw import --mnemonic "$MNEMONIC" 2>&1) || { err "Wallet import failed: $INIT_RESULT"; }
+      INIT_RESULT=$(run_cli import --mnemonic "$MNEMONIC" 2>&1) || { err "Wallet import failed: $INIT_RESULT"; }
     else
-      INIT_RESULT=$(run_cli_pw init 2>&1) || { err "Wallet init failed: $INIT_RESULT"; }
+      INIT_RESULT=$(run_cli init 2>&1) || { err "Wallet init failed: $INIT_RESULT"; }
     fi
     ADDRESS=$(echo "$INIT_RESULT" | node -e "try{process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).address)}catch{}" 2>/dev/null || echo "")
     if [[ -z "$ADDRESS" ]]; then
@@ -246,7 +236,7 @@ if [[ "$AUTO_INIT" == true ]]; then
 
   # Verify: unlock + lock
   log "Verifying..."
-  run_cli_pw unlock --duration 10 >/dev/null 2>&1 || true
+  run_cli unlock --duration 10 >/dev/null 2>&1 || true
   run_cli lock >/dev/null 2>&1 || true
   log "OK"
 fi

@@ -11,8 +11,8 @@ export function logTransaction(data) {
   if (existsSync(LOG_PATH)) {
     const lines = readFileSync(LOG_PATH, "utf8").trim().split("\n").filter(Boolean)
     if (lines.length > 0) {
-      const last = JSON.parse(lines[lines.length - 1])
-      prevHash = last._hash
+      try { prevHash = JSON.parse(lines[lines.length - 1])._hash }
+      catch { /* corrupted last line — start new chain */ }
     }
   }
   // Build content (timestamp + data), then hash it

@@ -23,7 +23,7 @@ if (existsSync(join(BASE_DIR, "keystore.enc")) && !existsSync(join(WALLETS_DIR, 
   mkdirSync(WALLETS_DIR, { recursive: true, mode: 0o700 })
   const defaultDir = join(WALLETS_DIR, "default")
   mkdirSync(defaultDir, { recursive: true, mode: 0o700 })
-  for (const f of ["keystore.enc", "meta.json", ".wallet-password", ".session-secret", "tx-log.jsonl", "config.json"]) {
+  for (const f of ["keystore.enc", "meta.json", ".wallet-password", ".session-secret", "tx-log.jsonl", "config.json", "chains.json", "wallet.json"]) {
     const src = join(BASE_DIR, f)
     if (existsSync(src)) {
       writeFileSync(join(defaultDir, f), readFileSync(src), { mode: 0o600 })

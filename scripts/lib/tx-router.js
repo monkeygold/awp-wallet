@@ -62,7 +62,9 @@ export async function batchTransaction({ sessionToken, operations, chain, mode }
   await validateBatchOps(operations, chain)
 
   // Call underlying send functions directly, bypassing sendTransaction (avoid duplicate validation/requireScope)
-  const selectedMode = mode || await selectMode(chain, operations[0]?.asset)
+  // Use ERC-20 gas estimate if any operation has an asset (higher gas than native)
+  const hasTokenOp = operations.some(op => op.asset)
+  const selectedMode = mode || await selectMode(chain, hasTokenOp ? "token" : null)
   const results = []
   for (const op of operations) {
     const result = selectedMode === "direct"

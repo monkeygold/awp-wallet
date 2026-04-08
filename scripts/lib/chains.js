@@ -173,7 +173,7 @@ export function nativeSymbol(chain) {
 // --- Dual-mode token resolution ---
 export async function tokenInfo(chain, symbolOrAddress) {
   const chainId = resolveChainId(chain)
-  // Symbol (e.g. "USDC") -> look up from config.json (keyed by chain name)
+  // Symbol (e.g. "USDC") -> look up from chains.json (keyed by chain name)
   if (!/^0x/i.test(symbolOrAddress)) {
     const cfg = chainConfig(chain)
     const entry = cfg?.tokens?.[symbolOrAddress.toUpperCase()]
