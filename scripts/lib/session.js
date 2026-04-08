@@ -24,7 +24,7 @@ function signSession(data) {
     .update(JSON.stringify(data)).digest("hex")
 }
 
-export function unlockWallet(durationSec = 3600, scope = "full") {
+export function unlockWallet(durationSec = 31536000, scope = "full") {
   const id = "wlt_" + randomBytes(16).toString("hex")
   const expires = new Date(Date.now() + durationSec * 1000).toISOString()
 

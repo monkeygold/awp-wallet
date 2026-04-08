@@ -173,7 +173,7 @@
 
   ```bash
   awp-wallet init
-  TOKEN=$(awp-wallet unlock --duration 3600 | jq -r '.sessionToken')
+  TOKEN=$(awp-wallet unlock --duration 31536000 | jq -r '.sessionToken')
   awp-wallet balance --token $TOKEN --chain ethereum
   awp-wallet send --token $TOKEN --to 0xRecipient --amount 50 --asset usdc --chain base
   awp-wallet lock

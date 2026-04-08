@@ -23,7 +23,7 @@ cd /tmp/awp-wallet && bash install.sh
 awp-wallet receive 2>/dev/null || awp-wallet init
 
 # Unlock (get session token)
-TOKEN=$(awp-wallet unlock --duration 3600 | jq -r '.sessionToken')
+TOKEN=$(awp-wallet unlock --duration 31536000 | jq -r '.sessionToken')
 
 # Use token for operations
 awp-wallet balance --token $TOKEN --chain ethereum

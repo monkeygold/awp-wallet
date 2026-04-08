@@ -43,7 +43,7 @@ TOKEN=$(awp-wallet setup | jq -r '.sessionToken')
 
 Or without jq:
 ```bash
-TOKEN=$(awp-wallet unlock --raw --duration 3600)
+TOKEN=$(awp-wallet unlock --raw --duration 31536000)
 ```
 
 ### If awp-wallet is not installed
@@ -59,7 +59,7 @@ The installer creates the wallet automatically. No password needed.
 ### Then get a session token
 
 ```bash
-TOKEN=$(awp-wallet unlock --raw --duration 3600)
+TOKEN=$(awp-wallet unlock --raw --duration 31536000)
 ```
 
 ## Step 4 — Execute the User's Request

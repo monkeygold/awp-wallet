@@ -76,7 +76,7 @@ cli.command("import")
 
 cli.command("unlock")
   .description("Unlock wallet and get session token")
-  .option("--duration <seconds>", "Session duration in seconds", "3600")
+  .option("--duration <seconds>", "Session duration in seconds", "31536000")
   .option("--scope <scope>", "Session scope (read|transfer|full)", "full")
   .option("--raw", "Output only the session token (no JSON wrapper)")
   .action(async (opts) => {
@@ -427,7 +427,7 @@ cli.command("wallet-id")
 
 cli.command("setup")
   .description("Ensure wallet exists and unlock session (one-step)")
-  .option("--duration <seconds>", "Session duration in seconds", "3600")
+  .option("--duration <seconds>", "Session duration in seconds", "31536000")
   .action(async (opts) => {
     try {
       const { existsSync } = await import("node:fs")
