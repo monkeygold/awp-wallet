@@ -132,7 +132,7 @@ cli.command("verify-log")
 
 cli.command("status")
   .description("Show wallet status")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .action(async (opts) => {
     try {
       const { validateSession } = await import("./lib/session.js")
@@ -149,7 +149,7 @@ cli.command("status")
 
 cli.command("balance")
   .description("Check balance on chain")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .option("--asset <asset>", "Token symbol or contract address")
   .action(async (opts) => {
     try {
@@ -161,7 +161,7 @@ cli.command("balance")
 
 cli.command("portfolio")
   .description("Check balances across all configured chains")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .action(async (opts) => {
     try {
       const { getPortfolio } = await import("./lib/balance.js")
@@ -171,7 +171,7 @@ cli.command("portfolio")
 
 cli.command("send")
   .description("Send tokens")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--to <address>", "Recipient address")
   .requiredOption("--amount <amount>", "Amount to send")
   .option("--asset <asset>", "Token symbol or contract address")
@@ -189,7 +189,7 @@ cli.command("send")
 
 cli.command("batch")
   .description("Send multiple operations")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--ops <json>", "Operations JSON array")
   .option("--mode <mode>", "Transaction mode (direct|gasless)")
   .action(async (opts) => {
@@ -205,7 +205,7 @@ cli.command("batch")
 
 cli.command("approve")
   .description("Approve token spending")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--asset <asset>", "Token symbol or contract address")
   .requiredOption("--spender <address>", "Spender address")
   .requiredOption("--amount <amount>", "Amount to approve")
@@ -223,7 +223,7 @@ cli.command("approve")
 
 cli.command("revoke")
   .description("Revoke token approval")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--asset <asset>", "Token symbol or contract address")
   .requiredOption("--spender <address>", "Spender address")
   .option("--mode <mode>", "Transaction mode (direct|gasless)")
@@ -264,7 +264,7 @@ cli.command("tx-status")
 
 cli.command("sign-message")
   .description("Sign a message (EIP-191)")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--message <message>", "Message to sign")
   .action(async (opts) => {
     try {
@@ -292,7 +292,7 @@ cli.command("receive")
 
 cli.command("allowances")
   .description("Check token allowances")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--asset <asset>", "Token symbol or contract address")
   .requiredOption("--spender <address>", "Spender address")
   .action(async (opts) => {
@@ -305,7 +305,7 @@ cli.command("allowances")
 
 cli.command("history")
   .description("Show transaction history")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .option("--limit <n>", "Number of entries", "50")
   .action(async (opts) => {
     try {
@@ -366,7 +366,7 @@ cli.command("chains")
 
 cli.command("upgrade-7702")
   .description("Upgrade EOA via EIP-7702")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .action(async (opts) => {
     try {
       const chain = await resolveChain()
@@ -377,7 +377,7 @@ cli.command("upgrade-7702")
 
 cli.command("deploy-4337")
   .description("Deploy Smart Account (gasless)")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .action(async (opts) => {
     try {
       const chain = await resolveChain()
@@ -389,7 +389,7 @@ cli.command("deploy-4337")
 
 cli.command("revoke-7702")
   .description("Revoke EIP-7702 delegation")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .action(async (opts) => {
     try {
       const chain = await resolveChain()
@@ -400,7 +400,7 @@ cli.command("revoke-7702")
 
 cli.command("sign-typed-data")
   .description("Sign typed data (EIP-712)")
-  .requiredOption("--token <token>", "Session token")
+  .option("--token <token>", "Session token (optional)")
   .requiredOption("--data <json>", "EIP-712 typed data as JSON")
   .action(async (opts) => {
     try {
@@ -430,9 +430,9 @@ cli.command("wallet-id")
   })
 
 cli.command("setup")
-  .description("Ensure wallet exists and unlock session (one-step)")
-  .option("--duration <seconds>", "Session duration in seconds", "31536000")
-  .option("--raw", "Output only the session token (no JSON wrapper)")
+  .description("Ensure wallet exists (one-step)")
+  .option("--duration <seconds>", "Session duration (deprecated, ignored)")
+  .option("--raw", "Output only the wallet address (no JSON wrapper)")
   .action(async (opts) => {
     try {
       const { existsSync } = await import("node:fs")
@@ -446,17 +446,13 @@ cli.command("setup")
         process.stderr.write(JSON.stringify({ step: "init", address: w.address }) + "\n")
       }
 
-      // Unlock
-      const duration = parseInt(opts.duration) || 31536000
-      const { unlockWallet } = await import("./lib/session.js")
-      const result = unlockWallet(duration, "full")
+      const { getAddress } = await import("./lib/keystore.js")
+      const address = getAddress("eoa")
 
       if (opts.raw) {
-        process.stdout.write(result.sessionToken)
+        process.stdout.write(address)
       } else {
-        const { getAddress } = await import("./lib/keystore.js")
-        const address = getAddress("eoa")
-        json({ status: "ready", address, sessionToken: result.sessionToken, expires: result.expires })
+        json({ status: "ready", address })
       }
     } catch (e) { fail(e.message) }
   })

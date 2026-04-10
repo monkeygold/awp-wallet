@@ -31,20 +31,15 @@ metadata:
 
 # AWP Wallet
 
-EVM wallet for AI agents. All output is JSON. No passwords — wallet stores keys in plaintext with 0600 file permissions.
+EVM wallet for AI agents. All output is JSON. No passwords, no session tokens needed.
 
 ## Setup
 
-One command creates the wallet (if needed) and returns a session token:
-
 ```bash
-TOKEN=$(awp-wallet setup | jq -r '.sessionToken')
+awp-wallet setup
 ```
 
-Without jq:
-```bash
-TOKEN=$(awp-wallet setup --raw)
-```
+Creates wallet if needed. Returns `{ "status": "ready", "address": "0x..." }`.
 
 ### If awp-wallet is not installed
 
@@ -54,17 +49,15 @@ git clone https://github.com/awp-core/awp-wallet.git ~/awp-wallet && cd ~/awp-wa
 
 If `command not found` after install: `export PATH="$HOME/.local/bin:$PATH"`
 
-The installer creates the wallet automatically. Then run `awp-wallet setup --raw` to get a session token.
-
 ## Commands
 
-`$T` = session token from setup.
+No `--token` needed. Just run the command directly.
 
 ### Balance / Portfolio
 ```bash
-awp-wallet balance --token $T --chain ethereum
-awp-wallet balance --token $T --chain base --asset usdc
-awp-wallet portfolio --token $T
+awp-wallet balance --chain ethereum
+awp-wallet balance --chain base --asset usdc
+awp-wallet portfolio
 ```
 
 ### Send
@@ -77,25 +70,25 @@ Confirm with user first:
      proceed? (y/n)
 ```
 ```bash
-awp-wallet send --token $T --to 0xAddr --amount 0.1 --chain ethereum
-awp-wallet send --token $T --to 0xAddr --amount 100 --asset usdc --chain base
+awp-wallet send --to 0xAddr --amount 0.1 --chain ethereum
+awp-wallet send --to 0xAddr --amount 100 --asset usdc --chain base
 ```
 
-### Receive (no token needed)
+### Receive
 ```bash
 awp-wallet receive
 ```
 
 ### Approve / Revoke
 ```bash
-awp-wallet approve --token $T --asset usdc --spender 0xRouter --amount 1000 --chain base
-awp-wallet revoke  --token $T --asset usdc --spender 0xRouter --chain base
+awp-wallet approve --asset usdc --spender 0xRouter --amount 1000 --chain base
+awp-wallet revoke --asset usdc --spender 0xRouter --chain base
 ```
 
 ### Sign
 ```bash
-awp-wallet sign-message --token $T --message "Hello World"
-awp-wallet sign-typed-data --token $T --data '{"types":{...},...}'
+awp-wallet sign-message --message "Hello World"
+awp-wallet sign-typed-data --data '{"types":{...},...}'
 ```
 
 ### Gas Estimate
@@ -110,12 +103,12 @@ awp-wallet tx-status --hash 0xHash --chain ethereum
 
 ### History
 ```bash
-awp-wallet history --token $T --chain ethereum --limit 20
+awp-wallet history --chain ethereum --limit 20
 ```
 
 ### Batch Send
 ```bash
-awp-wallet batch --token $T --chain base \
+awp-wallet batch --chain base \
   --ops '[{"to":"0xA","amount":"10","asset":"usdc"},{"to":"0xB","amount":"20","asset":"usdc"}]'
 ```
 
@@ -123,11 +116,6 @@ awp-wallet batch --token $T --chain base \
 ```bash
 awp-wallet export                  # mnemonic
 awp-wallet export-private-key      # private key
-```
-
-### Lock
-```bash
-awp-wallet lock
 ```
 
 ## Chains
@@ -161,7 +149,6 @@ Built-in: `usdc` `usdt` `awp` `weth` `wbnb` `dai`
 |-------|-----|
 | `command not found` | Install (see Setup) |
 | `No wallet found` | `awp-wallet setup` |
-| `Invalid or expired session` | `awp-wallet unlock --raw` |
 | `Insufficient balance` | Tell user; suggest `--mode gasless` |
 
 ## Advanced
@@ -171,12 +158,12 @@ awp-wallet chains                                       # list all chains
 awp-wallet chain-info --chain zksync                    # chain details
 awp-wallet wallets                                      # list wallet profiles
 awp-wallet wallet-id                                    # current profile ID
-awp-wallet status --token $T                            # session info
-awp-wallet allowances --token $T --asset usdc --spender 0xRouter --chain base
+awp-wallet status                                       # wallet address
+awp-wallet allowances --asset usdc --spender 0xRouter --chain base
 awp-wallet verify-log                                   # audit log integrity
-awp-wallet upgrade-7702 --token $T --chain ethereum     # EIP-7702 upgrade
-awp-wallet revoke-7702 --token $T --chain ethereum      # revoke EIP-7702
-awp-wallet deploy-4337 --token $T --chain ethereum      # smart account status
+awp-wallet upgrade-7702 --chain ethereum                # EIP-7702 upgrade
+awp-wallet revoke-7702 --chain ethereum                 # revoke EIP-7702
+awp-wallet deploy-4337 --chain ethereum                 # smart account status
 ```
 
 ## Environment Variables (all optional)
