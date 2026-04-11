@@ -135,15 +135,17 @@ cli.command("status")
   .option("--token <token>", "Session token (optional)")
   .action(async (opts) => {
     try {
-      const { validateSession } = await import("./lib/session.js")
       const { getAddress } = await import("./lib/keystore.js")
-      const session = validateSession(opts.token)
       const address = getAddress("eoa")
-      json({
-        address,
-        sessionValid: true,
-        sessionExpires: session.expires,
-      })
+      const result = { address }
+      // If token provided, validate it and include session info
+      if (opts.token) {
+        const { validateSession } = await import("./lib/session.js")
+        const session = validateSession(opts.token)
+        result.sessionValid = true
+        result.sessionExpires = session.expires
+      }
+      json(result)
     } catch (e) { fail(e.message) }
   })
 
