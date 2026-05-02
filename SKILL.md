@@ -112,6 +112,19 @@ awp-wallet batch --chain base \
   --ops '[{"to":"0xA","amount":"10","asset":"usdc"},{"to":"0xB","amount":"20","asset":"usdc"}]'
 ```
 
+### Raw Transaction (call any contract without touching private key)
+```bash
+# Sign only (returns signed hex, caller broadcasts)
+awp-wallet sign-tx --to 0xContract --data 0xabcdef... --chain base
+awp-wallet sign-tx --to 0xContract --data 0xabcdef... --value 1000000000000000 --chain base
+
+# Sign + broadcast (awp-wallet handles everything)
+awp-wallet send-tx --to 0xContract --data 0xabcdef... --chain base
+awp-wallet send-tx --to 0xContract --data 0xabcdef... --gas 200000 --chain base
+```
+
+Use `sign-tx` / `send-tx` when you need to call arbitrary contract methods (DeFi, NFT, staking, etc.). Build your calldata externally, pass it via `--data`.
+
 ### Export (for wallet migration)
 ```bash
 awp-wallet export                  # mnemonic

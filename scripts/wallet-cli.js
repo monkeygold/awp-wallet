@@ -459,5 +459,41 @@ cli.command("setup")
     } catch (e) { fail(e.message) }
   })
 
+cli.command("sign-tx")
+  .description("Sign a raw transaction (returns signed hex, does NOT broadcast)")
+  .option("--token <token>", "Session token (optional)")
+  .requiredOption("--to <address>", "Contract/recipient address")
+  .option("--value <wei>", "Value in wei (default: 0)", "0")
+  .option("--data <hex>", "Calldata hex (default: 0x)", "0x")
+  .option("--gas <gas>", "Gas limit (auto-estimated if omitted)")
+  .option("--nonce <nonce>", "Nonce (auto if omitted)")
+  .action(async (opts) => {
+    try {
+      const { requireScope } = await import("./lib/session.js")
+      requireScope(opts.token, "full")
+      const chain = await resolveChain()
+      const { signRawTx } = await import("./lib/raw-tx.js")
+      json(await signRawTx({ to: opts.to, value: opts.value, data: opts.data, gas: opts.gas, nonce: opts.nonce, chain }))
+    } catch (e) { fail(e.message) }
+  })
+
+cli.command("send-tx")
+  .description("Sign and broadcast a raw transaction")
+  .option("--token <token>", "Session token (optional)")
+  .requiredOption("--to <address>", "Contract/recipient address")
+  .option("--value <wei>", "Value in wei (default: 0)", "0")
+  .option("--data <hex>", "Calldata hex (default: 0x)", "0x")
+  .option("--gas <gas>", "Gas limit (auto-estimated if omitted)")
+  .option("--nonce <nonce>", "Nonce (auto if omitted)")
+  .action(async (opts) => {
+    try {
+      const { requireScope } = await import("./lib/session.js")
+      requireScope(opts.token, "full")
+      const chain = await resolveChain()
+      const { sendRawTx } = await import("./lib/raw-tx.js")
+      json(await sendRawTx({ to: opts.to, value: opts.value, data: opts.data, gas: opts.gas, nonce: opts.nonce, chain }))
+    } catch (e) { fail(e.message) }
+  })
+
 // --- Run ---
 cli.parseAsync(process.argv).catch(e => fail(e.message))
